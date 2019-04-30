@@ -14,11 +14,6 @@ dimension(0),offset(0),weight(0)
 	loadFile(path);
 }
 
-Channel::Channel(unsigned char *o_data, int o_width, int o_height)
-:data(o_data),width(o_width),height(o_height),range(255),type(2),min(255),max(0),
-dimension(0),offset(0),weight(0)
-{} // para quando souber o tamanho e a informação
-
 Channel::Channel(int o_width, int o_height)
 :width(o_width),height(o_height),range(255),type(2),min(255),max(0),
 dimension(0),offset(0),weight(0)
@@ -26,10 +21,17 @@ dimension(0),offset(0),weight(0)
 	data = new unsigned char[width * height]{0};
 }
 
-/*Channel::Channel(unsigned char *o_data, int o_width, int o_height, int o_range)
-:data(o_data),width(o_width),height(o_height),range(o_range),type(2),min(255),max(0),
+Channel::Channel(unsigned char *o_data, int o_width, int o_height)
+:data(o_data),width(o_width),height(o_height),range(255),type(2),min(255),max(0),
 dimension(0),offset(0),weight(0)
-{}*/
+{} // para quando souber o tamanho e a informação
+
+Channel::Channel(int *o_data, int o_width, int o_height)
+:width(o_width),height(o_height),range(255),type(2),min(255),max(0),
+dimension(0),offset(0),weight(0)
+{
+	data = to255(o_data);
+}
 
 Channel::~Channel(){
 	
@@ -597,10 +599,10 @@ void Channel::roberts(){
 
 	/*	
 	data = to255(v[0]);
-	saveFile("x.pgm");
+	saveFile("d1.pgm");
 
 	data = to255(v[1]);
-	saveFile("y.pgm");
+	saveFile("d2.pgm");
 	*/
 	
 	delete[] copy;

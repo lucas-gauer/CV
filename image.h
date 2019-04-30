@@ -56,6 +56,10 @@ public:
 	void roberts();
 	void robinson();
 
+	// Fill
+	void fill(int threshold);
+	void flood(int index, unsigned int *groups, unsigned int &number, int &th);
+
 	// Others
 	Channel *grayscale();
 	// Mahalanobis subsection

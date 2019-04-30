@@ -17,8 +17,9 @@ public:
 	// Constructors
 	Channel();
 	Channel(std::string path);
-	Channel(unsigned char *o_data, int o_width, int o_height);
 	Channel(int o_width, int o_height);
+	Channel(unsigned char *o_data, int o_width, int o_height);
+	Channel(int *o_data, int o_width, int o_height);
 	~Channel();
 
 	// IO

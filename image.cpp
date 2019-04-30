@@ -4,6 +4,7 @@ double covariance(Channel *X, Channel *Y, double mX, double mY);
 void inverse(double* in, double* out);
 void matrixMultiplier(double* a, double* b, double* result);
 void sort(float *v, int start, int end);
+float ld(unsigned int A, unsigned int B, Image *img);
 
 // -----------------------------------CONSTRUCTORS-----------------------------------
 
@@ -410,6 +411,123 @@ void Image::robinson(){
 	B->robinson();
 }
 
+// -----------------------------------FILL-----------------------------------
+
+void Image::fill(int threshold){
+	unsigned int *groups = new unsigned int[width * height]{0};
+	unsigned int size = width*height;
+
+	unsigned int index = 0;
+	unsigned int number= 0;
+
+
+	while(index <= size){
+		number++;
+		//std::cout << "Init number: " << number << std::endl;
+		//std::cout << "Index: " << index << std::endl;
+		flood(index, groups, number, threshold);
+		//std::cout << "End number: " << number << std::endl;
+
+
+		while(index <= size && groups[index] != 0){
+			index++;
+		}
+	}
+	std::cout << "Number: " << number << std::endl;
+	//number--;
+	//exit(1);
+
+	Channel result((int*)groups, width, height);
+	result.saveFile("groups.pgm");
+
+	//if(number == 1) std::cout << "danger!" << std::endl;
+	unsigned int *r = new unsigned int[number]{0};
+	unsigned int *g = new unsigned int[number]{0};
+	unsigned int *b = new unsigned int[number]{0};
+	unsigned int *count = new unsigned int[number]{0};
+
+	std::cout << "1" << std::endl;
+
+	for(unsigned i = 0; i < size; i++){
+		r[groups[i]-1] += R->data[i];
+		g[groups[i]-1] += G->data[i];
+		b[groups[i]-1] += B->data[i];
+		count[groups[i]-1]++;
+	}
+
+	std::cout << "2" << std::endl;
+
+	for(unsigned i = 0; i < number; i++){
+		if(count[i] == 0) continue;
+		r[i] /= count[i];
+		g[i] /= count[i];
+		b[i] /= count[i];
+	}
+
+	std::cout << "3" << std::endl;
+
+	for(unsigned i = 0; i < size; i++){
+		R->data[i] = r[groups[i]-1];
+		G->data[i] = g[groups[i]-1];
+		B->data[i] = b[groups[i]-1];
+	}
+
+	std::cout << "4" << std::endl;
+
+	saveFile("result.ppm");
+}
+
+void Image::flood(int index, unsigned int *groups, unsigned int &number, int &th){
+
+	groups[index] = number;
+	//std::cout << "set " << std::endl;
+
+	//std::cout << "layer " << std::endl;
+	//std::cout << "index:  " << index << std::endl;
+	//std::cout << "number: " << number << std::endl;
+	//std::cout << "th:     " << th << std::endl;
+
+	// LEFT
+	if(index % width != 0){ // se existe
+		if(groups[index - 1] == 0){ // se não foi agrupado ainda
+			if(ld(index, index - 1, this) < th){ // se pertence
+				flood(index - 1, groups, number, th);
+			}
+		}
+	}
+	//std::cout << "left done" << std::endl;
+
+	// UP
+	if(index - width >= 0){
+		if(groups[index - width] == 0){
+			if(ld(index, index - width, this) < th){
+				flood(index - width, groups, number, th);
+			}
+		}
+	}
+	//std::cout << "up done" << std::endl;
+
+	// RIGHT
+	if(index % width != width - 1){
+		if(groups[index + 1] == 0){
+			if(ld(index, index + 1, this) < th){
+				flood(index + 1, groups, number, th);
+			}
+		}
+	}
+	//std::cout << "right done" << std::endl;
+
+	// DOWN
+	if(index + width <= height * width){
+		if(groups[index + width] == 0){
+			if(ld(index, index + width, this) < th){
+				flood(index + width, groups, number, th);
+			}
+		}
+	}
+	//std::cout << "done\n" << std::endl;
+}
+
 // -----------------------------------OTHERS-----------------------------------
 
 Channel* Image::grayscale(){ // converte para escala de cinza
@@ -501,6 +619,15 @@ void sort(float* v, int start, int end){ // mergesort
         sort(v, mid, end);
         intercalate(v, start, mid, end);
     }
+}
+
+// Fill subsection
+float ld(unsigned int a, unsigned int b, Image *img){ //linearDistance
+	return sqrt(
+		pow(img->R->data[a] - img->R->data[b],2) + 
+		pow(img->G->data[a] - img->G->data[b],2) + 
+		pow(img->B->data[a] - img->B->data[b],2)
+		);
 }
 
 // -----------------------------------DEBUG-----------------------------------

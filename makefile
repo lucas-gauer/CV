@@ -1,5 +1,5 @@
 CC = g++
-CFLAGS = -std=c++11 -O3 -Wall -g0
+CFLAGS = -std=c++11 -Wall -g0
 SRCS = main.cpp image.cpp channel.cpp
 OBJS = $(SRCS:.cpp=.o)
 MAIN = a.out
