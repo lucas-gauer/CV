@@ -19,7 +19,9 @@ Image::Image(std::string path)
 }
 
 Image::~Image(){
-
+	delete R;
+	delete G;
+	delete B;
 }
 
 // -----------------------------------IO-----------------------------------
@@ -64,7 +66,7 @@ void Image::loadFile(std::string o_path){ // cria 3 sub-imagens da classe Channe
 	b = new unsigned char[width * height];
 
 	i = 0;
-	while(inFile){ // linhas de conteúdo
+	while(i < width * height){ // linhas de conteúdo
 		inFile >> hue;
 		r[i] = stoi(hue);
 		inFile >> hue;
@@ -421,7 +423,7 @@ void Image::fill(int threshold){
 	unsigned int number= 0;
 
 
-	while(index <= size){
+	while(index < size){
 		number++;
 		//std::cout << "Init number: " << number << std::endl;
 		//std::cout << "Index: " << index << std::endl;
@@ -429,7 +431,7 @@ void Image::fill(int threshold){
 		//std::cout << "End number: " << number << std::endl;
 
 
-		while(index <= size && groups[index] != 0){
+		while(index < size && groups[index] != 0){
 			index++;
 		}
 	}
@@ -474,18 +476,18 @@ void Image::fill(int threshold){
 
 	std::cout << "4" << std::endl;
 
+	delete[] groups;
+	delete[] r;
+	delete[] g;
+	delete[] b;
+	delete[] count;
+
 	saveFile("result.ppm");
 }
 
 void Image::flood(int index, unsigned int *groups, unsigned int &number, int &th){
 
 	groups[index] = number;
-	//std::cout << "set " << std::endl;
-
-	//std::cout << "layer " << std::endl;
-	//std::cout << "index:  " << index << std::endl;
-	//std::cout << "number: " << number << std::endl;
-	//std::cout << "th:     " << th << std::endl;
 
 	// LEFT
 	if(index % width != 0){ // se existe
@@ -495,7 +497,6 @@ void Image::flood(int index, unsigned int *groups, unsigned int &number, int &th
 			}
 		}
 	}
-	//std::cout << "left done" << std::endl;
 
 	// UP
 	if(index - width >= 0){
@@ -505,7 +506,6 @@ void Image::flood(int index, unsigned int *groups, unsigned int &number, int &th
 			}
 		}
 	}
-	//std::cout << "up done" << std::endl;
 
 	// RIGHT
 	if(index % width != width - 1){
@@ -515,17 +515,224 @@ void Image::flood(int index, unsigned int *groups, unsigned int &number, int &th
 			}
 		}
 	}
-	//std::cout << "right done" << std::endl;
 
 	// DOWN
-	if(index + width <= height * width){
+	if((index + width) < (height * width)){
 		if(groups[index + width] == 0){
 			if(ld(index, index + width, this) < th){
 				flood(index + width, groups, number, th);
 			}
 		}
 	}
-	//std::cout << "done\n" << std::endl;
+}
+
+void Image::fill2(int threshold){
+	unsigned int *groups = new unsigned int[width * height]{0};
+	unsigned int size = width*height;
+
+	unsigned int number = 0;
+	unsigned int aux	= 0;
+
+	for(unsigned int index = 0; index < size; index++){
+		if(groups[index] == 0){
+			number++;
+			aux = number;
+			groups[index] = number;
+		}
+		else aux = groups[index];
+
+		flood2(index, groups, aux, threshold);
+	}
+	std::cout << "Number: " << number << std::endl;
+
+	Channel result((int*)groups, width, height);
+	result.saveFile("groups.pgm");
+
+	unsigned int *r = new unsigned int[number]{0};
+	unsigned int *g = new unsigned int[number]{0};
+	unsigned int *b = new unsigned int[number]{0};
+	unsigned int *count = new unsigned int[number]{0};
+
+	std::cout << "1" << std::endl;
+
+	for(unsigned i = 0; i < size; i++){
+		r[groups[i]-1] += R->data[i];
+		g[groups[i]-1] += G->data[i];
+		b[groups[i]-1] += B->data[i];
+		count[groups[i]-1]++;
+	}
+
+	std::cout << "2" << std::endl;
+
+	for(unsigned i = 0; i < number; i++){
+		if(count[i] == 0) continue;
+		r[i] /= count[i];
+		g[i] /= count[i];
+		b[i] /= count[i];
+	}
+
+	std::cout << "3" << std::endl;
+
+	for(unsigned i = 0; i < size; i++){
+		R->data[i] = r[groups[i]-1];
+		G->data[i] = g[groups[i]-1];
+		B->data[i] = b[groups[i]-1];
+	}
+
+	std::cout << "4" << std::endl;
+
+	delete[] groups;
+	delete[] r;
+	delete[] g;
+	delete[] b;
+	delete[] count;
+}
+
+void Image::flood2(int index, unsigned int *groups, unsigned int &number, int &th){
+	// LEFT
+	if(index % width != 0){ // se existe
+		if(groups[index - 1] == 0){ // se não foi agrupado ainda
+			if(ld(index, index - 1, this) < th){ // se pertence
+				groups[index - 1] = number;
+			}
+		}
+	}
+
+	// UP
+	if(index - width >= 0){
+		if(groups[index - width] == 0){
+			if(ld(index, index - width, this) < th){
+				groups[index - width] = number;
+			}
+		}
+	}
+
+	// RIGHT
+	if(index % width != width - 1){
+		if(groups[index + 1] == 0){
+			if(ld(index, index + 1, this) < th){
+				groups[index + 1] = number;
+			}
+		}
+	}
+
+	// DOWN
+	if((index + width) < (height * width)){
+		if(groups[index + width] == 0){
+			if(ld(index, index + width, this) < th){
+				groups[index + width] = number;
+			}
+		}
+	}
+}
+
+void Image::fill3(int threshold){
+	unsigned int *groups = new unsigned int[width * height]{0};
+	unsigned int size = width*height;
+
+	unsigned int number = 0;
+	unsigned int aux	= 0;
+
+	for(unsigned int index = 0; index < size; index++){
+		if(groups[index] == 0){
+			number++;
+			aux = number;
+			groups[index] = number;
+		}
+		else aux = groups[index];
+
+		flood2(index, groups, aux, threshold);
+	}
+	std::cout << "Number: " << number << std::endl;
+
+	Channel result((int*)groups, width, height);
+	result.saveFile("groups.pgm");
+
+	unsigned int *r = new unsigned int[number]{0};
+	unsigned int *g = new unsigned int[number]{0};
+	unsigned int *b = new unsigned int[number]{0};
+	unsigned int *count = new unsigned int[number]{0};
+
+	std::cout << "1" << std::endl;
+
+	for(unsigned i = 0; i < size; i++){
+		r[groups[i]-1] += R->data[i];
+		g[groups[i]-1] += G->data[i];
+		b[groups[i]-1] += B->data[i];
+		count[groups[i]-1]++;
+	}
+
+	std::cout << "2" << std::endl;
+
+	for(unsigned i = 0; i < number; i++){
+		if(count[i] == 0) continue;
+		r[i] /= count[i];
+		g[i] /= count[i];
+		b[i] /= count[i];
+	}
+
+	std::cout << "3" << std::endl;
+
+	for(unsigned i = 0; i < size; i++){
+		R->data[i] = r[groups[i]-1];
+		G->data[i] = g[groups[i]-1];
+		B->data[i] = b[groups[i]-1];
+	}
+
+	std::cout << "4" << std::endl;
+
+	delete[] groups;
+	delete[] r;
+	delete[] g;
+	delete[] b;
+	delete[] count;
+}
+
+bool Image::Try(int index, unsigned int *groups, int &th, int dir){
+	switch(dir){
+	case 0:
+		// LEFT
+		if(index % width != 0){ // se existe
+			if(groups[index - 1] == 0){ // se não foi agrupado ainda
+				if(ld(index, index - 1, this) < th){ // se pertence
+					return true;
+				}
+			}
+		}
+		break;
+	case 1:
+		// UP
+		if(index - width >= 0){
+			if(groups[index - width] == 0){
+				if(ld(index, index - width, this) < th){
+					return true;
+				}
+			}
+		}
+		break;
+	case 2:
+		// RIGHT
+		if(index % width != width - 1){
+			if(groups[index + 1] == 0){
+				if(ld(index, index + 1, this) < th){
+					return true;
+				}
+			}
+		}
+		break;
+	case 3:
+		// DOWN
+		if((index + width) < (height * width)){
+			if(groups[index + width] == 0){
+				if(ld(index, index + width, this) < th){
+					return true;
+				}
+			}
+		}
+		break;
+	}
+
+	return false;
 }
 
 // -----------------------------------OTHERS-----------------------------------
@@ -633,17 +840,19 @@ float ld(unsigned int a, unsigned int b, Image *img){ //linearDistance
 // -----------------------------------DEBUG-----------------------------------
 
 void Image::showData(int a){
-	/*
+	
 	std::cout << std::endl;
 	if(a % 2 == 0){
-		for (int i = 0; i < height; i++){
+		for (int i = 320; i < 322; i++){
 			std::cout << "Line " << i << ": ";
 			for (int j = 0; j < width; j++){
-				std::cout << +data[i*width+j] << " ";
+				std::cout << +R->data[i*width+j] << "-";
+				std::cout << +G->data[i*width+j] << "-";
+				std::cout << +B->data[i*width+j] << " ";
 			}
 			std::cout << std::endl;
 		}
-	}*/
+	}
 
 	std::cout << "Path:\t" 	<< path 	<< std::endl;
 	std::cout << "Width:\t" << width 	<< std::endl;

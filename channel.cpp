@@ -3,38 +3,45 @@
 void negativeFilter(int *in, int length);
 
 Channel::Channel()
-:width(0),height(0),range(255),type(0),min(255),max(0),
+:data(nullptr),copy(nullptr),filter(nullptr),
+width(0),height(0),range(255),type(0),min(255),max(0),
 dimension(0),offset(0),weight(0)
 {}
 
 Channel::Channel(std::string path)
-:min(255),max(0),
+:copy(nullptr),filter(nullptr),
+min(255),max(0),
 dimension(0),offset(0),weight(0)
 { // load genérico
 	loadFile(path);
 }
 
 Channel::Channel(int o_width, int o_height)
-:width(o_width),height(o_height),range(255),type(2),min(255),max(0),
+:copy(nullptr),filter(nullptr),
+width(o_width),height(o_height),range(255),type(2),min(255),max(0),
 dimension(0),offset(0),weight(0)
 { // para quando souber apenas o tamanho desejado	
 	data = new unsigned char[width * height]{0};
 }
 
 Channel::Channel(unsigned char *o_data, int o_width, int o_height)
-:data(o_data),width(o_width),height(o_height),range(255),type(2),min(255),max(0),
+:data(o_data),copy(nullptr),filter(nullptr),
+width(o_width),height(o_height),range(255),type(2),min(255),max(0),
 dimension(0),offset(0),weight(0)
 {} // para quando souber o tamanho e a informação
 
 Channel::Channel(int *o_data, int o_width, int o_height)
-:width(o_width),height(o_height),range(255),type(2),min(255),max(0),
+:copy(nullptr),filter(nullptr),
+width(o_width),height(o_height),range(255),type(2),min(255),max(0),
 dimension(0),offset(0),weight(0)
 {
 	data = to255(o_data);
 }
 
 Channel::~Channel(){
-	
+	delete[] data;
+	delete[] copy;
+	delete[] filter;
 }
 
 // -----------------------------------IO-----------------------------------

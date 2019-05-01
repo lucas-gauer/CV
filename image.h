@@ -59,6 +59,11 @@ public:
 	// Fill
 	void fill(int threshold);
 	void flood(int index, unsigned int *groups, unsigned int &number, int &th);
+	void fill2(int threshold);
+	void flood2(int index, unsigned int *groups, unsigned int &number, int &th);
+	void fill3(int threshold);
+	void flood3(int index, unsigned int *groups, unsigned int &number, int &th);
+	bool Try(int index, unsigned int *groups, int &th, int dir);
 
 	// Others
 	Channel *grayscale();
