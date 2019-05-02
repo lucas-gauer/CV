@@ -530,18 +530,31 @@ void Image::fill2(int threshold){
 	unsigned int *groups = new unsigned int[width * height]{0};
 	unsigned int size = width*height;
 
-	unsigned int number = 0;
-	unsigned int aux	= 0;
+	unsigned char *father = new unsigned char[width * height]{0};
 
-	for(unsigned int index = 0; index < size; index++){
+	unsigned int index  = 0;
+	unsigned int number = 0;
+	//unsigned int aux	= 0;
+
+	/*for(unsigned int index = 0; index < size; index++){
 		if(groups[index] == 0){
-			number++;
-			aux = number;
+			//number++;
+			aux = ++number;
 			groups[index] = number;
+			father[index] = 0;
 		}
 		else aux = groups[index];
 
 		flood2(index, groups, aux, threshold);
+	}*/
+	while(index < size){
+		number++;
+
+		flood2(index, groups, father, number, threshold);
+
+		while(index < size && groups[index] != 0){
+			index++;
+		}
 	}
 	std::cout << "Number: " << number << std::endl;
 
@@ -582,115 +595,77 @@ void Image::fill2(int threshold){
 	std::cout << "4" << std::endl;
 
 	delete[] groups;
+	delete[] father;
 	delete[] r;
 	delete[] g;
 	delete[] b;
 	delete[] count;
 }
 
-void Image::flood2(int index, unsigned int *groups, unsigned int &number, int &th){
-	// LEFT
-	if(index % width != 0){ // se existe
-		if(groups[index - 1] == 0){ // se não foi agrupado ainda
-			if(ld(index, index - 1, this) < th){ // se pertence
-				groups[index - 1] = number;
-			}
-		}
-	}
+void Image::flood2(	int index, unsigned int *groups, unsigned char* father,
+					unsigned int &number, int &th){
 
-	// UP
-	if(index - width >= 0){
-		if(groups[index - width] == 0){
-			if(ld(index, index - width, this) < th){
-				groups[index - width] = number;
-			}
-		}
-	}
+	groups[index] = number;
 
-	// RIGHT
-	if(index % width != width - 1){
-		if(groups[index + 1] == 0){
-			if(ld(index, index + 1, this) < th){
-				groups[index + 1] = number;
-			}
-		}
-	}
+	bool moving = true;
+	while(1){
+		//std::cout << index << " ";
+		moving = false;
 
-	// DOWN
-	if((index + width) < (height * width)){
-		if(groups[index + width] == 0){
-			if(ld(index, index + width, this) < th){
-				groups[index + width] = number;
+		while(Try(index, groups, th, LEFT)){
+		    index -= 1;
+		    groups[index] = number;
+		    father[index] = RIGHT;
+		    moving = true;
+		}
+
+		while(Try(index, groups, th, UP)){
+		    index -= width;
+		    groups[index] = number;
+		    father[index] = DOWN;
+		    moving = true;
+		}
+
+		while(Try(index, groups, th, RIGHT)){
+		    index += 1;
+		    groups[index] = number;
+		    father[index] = LEFT;
+		    moving = true;
+		}
+
+		while(Try(index, groups, th, DOWN)){
+		    index += width;
+		    groups[index] = number;
+		    father[index] = UP;
+		    moving = true;
+		}
+
+		if(!moving){
+			switch(father[index]){
+			case LEFT:
+				index -= 1;
+				break;
+			case UP:
+				index -= width;
+				break;
+			case RIGHT:
+				index += 1;
+				break;
+			case DOWN:
+				index += width;
+				break;
+			default:
+				break;
 			}
 		}
+
+		if(father[index] == 0) break;
 	}
 }
 
-void Image::fill3(int threshold){
-	unsigned int *groups = new unsigned int[width * height]{0};
-	unsigned int size = width*height;
-
-	unsigned int number = 0;
-	unsigned int aux	= 0;
-
-	for(unsigned int index = 0; index < size; index++){
-		if(groups[index] == 0){
-			number++;
-			aux = number;
-			groups[index] = number;
-		}
-		else aux = groups[index];
-
-		flood2(index, groups, aux, threshold);
-	}
-	std::cout << "Number: " << number << std::endl;
-
-	Channel result((int*)groups, width, height);
-	result.saveFile("groups.pgm");
-
-	unsigned int *r = new unsigned int[number]{0};
-	unsigned int *g = new unsigned int[number]{0};
-	unsigned int *b = new unsigned int[number]{0};
-	unsigned int *count = new unsigned int[number]{0};
-
-	std::cout << "1" << std::endl;
-
-	for(unsigned i = 0; i < size; i++){
-		r[groups[i]-1] += R->data[i];
-		g[groups[i]-1] += G->data[i];
-		b[groups[i]-1] += B->data[i];
-		count[groups[i]-1]++;
-	}
-
-	std::cout << "2" << std::endl;
-
-	for(unsigned i = 0; i < number; i++){
-		if(count[i] == 0) continue;
-		r[i] /= count[i];
-		g[i] /= count[i];
-		b[i] /= count[i];
-	}
-
-	std::cout << "3" << std::endl;
-
-	for(unsigned i = 0; i < size; i++){
-		R->data[i] = r[groups[i]-1];
-		G->data[i] = g[groups[i]-1];
-		B->data[i] = b[groups[i]-1];
-	}
-
-	std::cout << "4" << std::endl;
-
-	delete[] groups;
-	delete[] r;
-	delete[] g;
-	delete[] b;
-	delete[] count;
-}
-
-bool Image::Try(int index, unsigned int *groups, int &th, int dir){
+bool Image::Try(int index, unsigned int *groups, int &th, DIR dir){
 	switch(dir){
-	case 0:
+	case LEFT:
 		// LEFT
 		if(index % width != 0){ // se existe
 			if(groups[index - 1] == 0){ // se não foi agrupado ainda
@@ -700,7 +675,8 @@ bool Image::Try(int index, unsigned int *groups, int &th, int dir){
 			}
 		}
 		break;
-	case 1:
+
+	case UP:
 		// UP
 		if(index - width >= 0){
 			if(groups[index - width] == 0){
@@ -710,7 +686,8 @@ bool Image::Try(int index, unsigned int *groups, int &th, int dir){
 			}
 		}
 		break;
-	case 2:
+
+	case RIGHT:
 		// RIGHT
 		if(index % width != width - 1){
 			if(groups[index + 1] == 0){
@@ -720,7 +697,8 @@ bool Image::Try(int index, unsigned int *groups, int &th, int dir){
 			}
 		}
 		break;
-	case 3:
+
+	case DOWN:
 		// DOWN
 		if((index + width) < (height * width)){
 			if(groups[index + width] == 0){
@@ -730,6 +708,8 @@ bool Image::Try(int index, unsigned int *groups, int &th, int dir){
 			}
 		}
 		break;
+	default:
+		std::cout << "error!";
 	}
 
 	return false;

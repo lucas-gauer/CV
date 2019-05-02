@@ -8,6 +8,13 @@
 
 #include "channel.h"
 
+enum DIR{
+	LEFT = 1,
+	UP,
+	RIGHT,
+	DOWN
+};
+
 class Image{
 public:
 	Channel *R, *G, *B;
@@ -60,10 +67,9 @@ public:
 	void fill(int threshold);
 	void flood(int index, unsigned int *groups, unsigned int &number, int &th);
 	void fill2(int threshold);
-	void flood2(int index, unsigned int *groups, unsigned int &number, int &th);
-	void fill3(int threshold);
-	void flood3(int index, unsigned int *groups, unsigned int &number, int &th);
-	bool Try(int index, unsigned int *groups, int &th, int dir);
+	void flood2(int index, unsigned int *groups, unsigned char* father,
+				unsigned int &number, int &th);
+	bool Try(int index, unsigned int *groups, int &th, DIR dir);
 
 	// Others
 	Channel *grayscale();
