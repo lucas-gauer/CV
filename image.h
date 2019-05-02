@@ -64,19 +64,19 @@ public:
 	void robinson();
 
 	// Fill
-	void fill(int threshold);
-	void flood(int index, unsigned int *groups, unsigned int &number, int &th);
-	void fill2(int threshold);
-	void flood2(int index, unsigned int *groups, unsigned char* father,
-				unsigned int &number, int &th);
-	bool Try(int index, unsigned int *groups, int &th, DIR dir);
+	void fill(int threshold, bool adapt);
+	void flood(int index, int *groups, unsigned char* father, int id, int th, bool adapt);
+	bool Try(int reference, int index, int *groups, int &th, DIR dir);
+	void segmentEdges(int *groups);
+	void segmentEdges(int *groups, int n_groups);
+	void floodFrom(int x, int y, int threshold, bool adapt);
 
 	// Others
 	Channel *grayscale();
 	// Mahalanobis subsection
 	// Knn subsection
 
-	//debug
+	// Debug
 	void showData(int a);
 };
 
