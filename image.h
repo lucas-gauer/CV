@@ -41,6 +41,7 @@ public:
 	void plus(int add);
 	void plusNoLimit(int add);
 	void minus(int sub);
+	void minusNoLimit(int add);
 	void threshold(int threshold); // REVER
 	void maximizer();
 
