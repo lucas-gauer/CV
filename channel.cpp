@@ -40,7 +40,7 @@ dimension(0),offset(0),weight(0)
 
 Channel::~Channel(){
 	delete[] data;
-	delete[] copy;
+	//delete[] copy;
 	delete[] filter;
 }
 
@@ -71,10 +71,11 @@ void Channel::loadFile(std::string o_path){ // le o arquivo e define os parâmet
 	inFile >> height;
 	inFile >> range;
 
+	delete[] data;
 	data = new unsigned char[width * height];
 
 	int i = 0;
-	while(inFile){ // linhas de conteúdo
+	while(i < width * height){ // linhas de conteúdo
 		inFile >> strbuff;
 		data[i] = stoi(strbuff);
 		if(data[i] > max){
@@ -153,6 +154,7 @@ void Channel::loadCSV(std::string o_path){ // le arquivos de 'matriz' para aplic
 		inFile.unget();
 	}
 
+	delete[] filter;
 	filter = new int[dimension*dimension];
 
 	int j;
@@ -175,7 +177,9 @@ void Channel::loadCSV(std::string o_path){ // le arquivos de 'matriz' para aplic
 }
 
 void Channel::reloadCSV(){
-	if(!csv_path.empty()) loadCSV(csv_path);
+	if(!csv_path.empty()){
+		loadCSV(csv_path);
+	}
 }
 
 // -----------------------------------MODIFICATIONS-----------------------------------
@@ -526,6 +530,7 @@ void Channel::sobel(){
 	};
 
 	int *v[2];
+	delete[] filter;
 	filter = filterX;
 	v[0] = returnFiltered();
 
@@ -550,10 +555,13 @@ void Channel::sobel(){
 		}
 	}
 
+	delete[] data;
+	data = to255(result);
+	delete[] result;
+
 	delete[] v[0];
 	delete[] v[1];
-
-	data = to255(result);
+	filter = nullptr;
 }
 
 void Channel::roberts(){
@@ -611,12 +619,14 @@ void Channel::roberts(){
 	data = to255(v[1]);
 	saveFile("d2.pgm");
 	*/
-	
+
+	delete[] data;
+	data = to255(result);
+	delete[] result;
+
 	delete[] copy;
 	delete[] v[0];
 	delete[] v[1];
-
-	data = to255(result);
 }
 
 void Channel::robinson(){
@@ -652,6 +662,7 @@ void Channel::robinson(){
 	filters[3] = filterD2;
 
 	int *v[8];
+	delete[] filter;
 
 	for(unsigned i = 0; i < 4; i++){
 		filter = filters[i];
@@ -685,11 +696,14 @@ void Channel::robinson(){
 		}
 	}
 
+	delete[] data;
+	data = to255(result);
+	delete[] result;
+
 	for(unsigned i = 0; i < 8; i++){
 		delete[] v[i];
 	}
-
-	data = to255(result);
+	filter = nullptr;
 }
 
 // -----------------------------------OTHERS-----------------------------------
