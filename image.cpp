@@ -173,6 +173,12 @@ void Image::minus(int sub){
 	B->minus(sub);
 }
 
+void Image::minusNoLimit(int sub){
+	R->minusNoLimit(sub);
+	G->minusNoLimit(sub);
+	B->minusNoLimit(sub);
+}
+
 void Image::threshold(int threshold){
 	R->threshold(threshold);
 	G->threshold(threshold);
