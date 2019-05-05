@@ -1,11 +1,6 @@
 #ifndef IMAGE_H
 #define IMAGE_H
 
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <cmath>
-
 #include "channel.h"
 
 enum DIR{
@@ -17,10 +12,10 @@ enum DIR{
 
 class Image{
 public:
-	Channel *R, *G, *B;
-	int *filter;
+	Channel *R = nullptr, *G = nullptr, *B = nullptr;
+	int *filter = nullptr;
 	int width, height, range, type; // atributos da imagem
-	std::string path, csv_path;
+	std::string path = "", csv_path = "", name = "";
 
 	// Constructors
 	Image();
@@ -54,6 +49,7 @@ public:
 	void applyNoLinear(float div);
 
 	// Distances
+	float distance(unsigned int a, unsigned int b);
 	void L1(int refR, int refG, int refB);
 	void L2(int refR, int refG, int refB);
 	void Mahalanobis(std::string path);
@@ -66,10 +62,9 @@ public:
 
 	// Fill
 	void fill(int threshold, bool adapt);
-	void flood(int index, int *groups, unsigned char* father, int id, int th, bool adapt);
+	void flood(int index, int *groups, unsigned char *father, int id, int th, bool adapt);
 	bool Try(int reference, int index, int *groups, int &th, DIR dir);
-	void segmentEdges(int *groups);
-	void segmentEdges(int *groups, int n_groups);
+	void segmentEdges(int *groups, unsigned int n_groups, bool colors);
 	void floodFrom(int x, int y, int threshold, bool adapt);
 
 	// Others

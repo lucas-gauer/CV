@@ -8,11 +8,11 @@
 
 class Channel{
 public:
-	unsigned char *data, *copy;
-	int *filter;
-	int width, height, range, type, min, max; // atributos da imagem
-	int dimension, offset, weight; // atributos do filtro carregado
-	std::string path, csv_path;
+	unsigned char *data = nullptr, *copy = nullptr;
+	int *filter = nullptr;
+	int width = 0, height = 0, range = 255, type = 2; // atributos da imagem
+	int dimension = 0, offset = 0, weight = 0; // atributos do filtro carregado
+	std::string path = "", csv_path = "", name = "";
 
 	// Constructors
 	Channel();
@@ -58,7 +58,6 @@ public:
 
 	// Others
 	unsigned char *expandedCopy();
-	void update();
 	unsigned char *to255(int *in);
 	unsigned char *int2char(int *in);
 
