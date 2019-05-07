@@ -1,5 +1,5 @@
 CC = g++
-CFLAGS = -std=c++11 -Wall -g
+CFLAGS = -std=c++11 -g -Wall -Wextra -Wshadow -O3
 SRCS = main.cpp image.cpp channel.cpp
 OBJS = $(SRCS:.cpp=.o)
 MAIN = a.out
@@ -17,3 +17,10 @@ clean:
 	$(RM) *.o *~ $(MAIN)
 	$(RM) *.pgm
 	$(RM) *.ppm
+
+rm:
+	$(RM) *.pgm
+	$(RM) *.ppm
+
+run:	$(MAIN)
+	./$(MAIN)

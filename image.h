@@ -52,13 +52,14 @@ public:
 	float distance(unsigned int a, unsigned int b);
 	void L1(int refR, int refG, int refB);
 	void L2(int refR, int refG, int refB);
-	void Mahalanobis(std::string path);
-	void Knn(std::string path, int K);
+	void Mahalanobis(std::string o_path);
+	void Knn(std::string o_path, int K);
 
 	// Edge Detection
 	void sobel();
 	void roberts();
 	void robinson();
+	void canny(int maxDist);
 
 	// Fill
 	void fill(int threshold, bool adapt);

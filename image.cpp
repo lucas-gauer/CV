@@ -11,10 +11,10 @@ Image::Image()
 :width(0),height(0),range(255),type(0)
 {}
 
-Image::Image(std::string path)
+Image::Image(std::string o_path)
 :width(0),height(0),range(255),type(0)
 { // load genérico
-	loadFile(path);
+	loadFile(o_path);
 }
 
 Image::~Image(){
@@ -264,8 +264,8 @@ void Image::L2(int refR, int refG, int refB){ // distância L2
 	result.saveFile("Bin-L2.pgm");
 }
 
-void Image::Mahalanobis(std::string path){ // distância de Mahalanobis
-	Image ref(path); // 'imagem' com amostras de referências
+void Image::Mahalanobis(std::string o_path){ // distância de Mahalanobis
+	Image ref(o_path); // 'imagem' com amostras de referências
 	double n_samples = ref.width * ref.height;
 
 	unsigned int add[3] = {0};
@@ -328,8 +328,8 @@ void Image::Mahalanobis(std::string path){ // distância de Mahalanobis
 	bin.saveFile("Bin-Mahalanobis.pgm");
 }
 
-void Image::Knn(std::string path, int K){
-	Image ref(path); // 'imagem' com amostras de referências
+void Image::Knn(std::string o_path, int K){
+	Image ref(o_path); // 'imagem' com amostras de referências
 	int n_samples = ref.width * ref.height;
 
 	float aux, min_dist, mean_dist = 0;
@@ -405,6 +405,12 @@ void Image::robinson(){
 	R->robinson();
 	G->robinson();
 	B->robinson();
+}
+
+void Image::canny(int maxDist){
+	R->canny(maxDist);
+	G->canny(maxDist);
+	B->canny(maxDist);
 }
 
 // -----------------------------------FILL-----------------------------------

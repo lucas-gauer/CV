@@ -6,6 +6,15 @@
 #include <string>
 #include <cmath>
 
+#define PI 3.14159265
+
+enum ORI{
+	HORIZONTAL = 1,
+	DIAG_UP,
+	VERTICAL,
+	DIAG_DOWN
+};
+
 class Channel{
 public:
 	unsigned char *data = nullptr, *copy = nullptr;
@@ -16,7 +25,7 @@ public:
 
 	// Constructors
 	Channel();
-	Channel(std::string path);
+	Channel(std::string o_path);
 	Channel(int o_width, int o_height);
 	Channel(unsigned char *o_data, int o_width, int o_height);
 	Channel(int *o_data, int o_width, int o_height);
@@ -38,6 +47,7 @@ public:
 	void minus(int sub);
 	void minusNoLimit(int add);
 	void threshold(int threshold);
+	void thresholdNoBin(int threshold);
 	void thresholdRange(int low, int high);
 	void maximizer();
 
@@ -49,15 +59,23 @@ public:
 	int* returnFiltered();
 	void applyKernel(unsigned int index);
 	void applyNoLinear(float div);
+	void gaussFilter();
 
 	// Edge Detection
 	void sobel_old();
 	void sobel();
 	void roberts();
 	void robinson();
+	void canny(int maxDist);
+
+	// Canny subsection
+	unsigned char *directions();
+	unsigned char *degree2direction(int *input);
+	bool isLocalMax(int index, unsigned char ori, int maxDist);
 
 	// Others
 	unsigned char *expandedCopy();
+	unsigned char *expandedCopy(unsigned char *in);
 	unsigned char *to255(int *in);
 	unsigned char *int2char(int *in);
 

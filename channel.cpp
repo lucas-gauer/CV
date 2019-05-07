@@ -4,8 +4,8 @@ void negativeFilter(int *in, int length);
 
 Channel::Channel(){}
 
-Channel::Channel(std::string path){ // load genérico
-	loadFile(path);
+Channel::Channel(std::string o_path){ // load genérico
+	loadFile(o_path);
 }
 
 Channel::Channel(int o_width, int o_height)
@@ -84,7 +84,8 @@ void Channel::reloadFile(){
 }
 
 void Channel::saveFile(){ // salva o estado atual
-	saveFile(name + ".pgm");
+	if(name != "") saveFile(name + ".pgm");
+	else saveFile("Output.pgm");
 }
 
 void Channel::saveFile(std::string o_path){ // salva em um caminho específico
@@ -240,6 +241,13 @@ void Channel::threshold(int threshold){
 				data[k * width + l] = 0;
 			}
 		}
+	}
+}
+
+void Channel::thresholdNoBin(int threshold){
+	// difere do anterior pq n seta para 255
+	for(int k = 0; k < width * height; ++k){
+		if(data[k] <= threshold) data[k] = 0;
 	}
 }
 
@@ -452,6 +460,27 @@ void Channel::applyNoLinear(float div){ // precisa de um csv carregado
 
 	delete[] copy;
 	reloadCSV();
+}
+
+void Channel::gaussFilter(){
+	int gauss[9] = {
+		1,2,1,
+		2,4,2,
+		1,2,1
+	};
+
+	delete[] filter;
+	filter = gauss;
+	dimension = 3;
+	offset = 1;
+	weight = 16;
+
+	int *aux = returnFiltered();
+
+	delete[] data;
+	data = to255(aux);
+	delete[] aux;
+	filter = nullptr;
 }
 
 // -----------------------------------EDGE - DETECTION-----------------------------------
@@ -705,9 +734,189 @@ void Channel::robinson(){
 	}
 }
 
+void Channel::canny(int maxDist){
+	gaussFilter();
+	sobel();
+
+	unsigned char *dir = directions();
+
+	for(int i = 0; i < width * height; i++){
+		if(!isLocalMax(i, dir[i], maxDist)){
+			// help.data[i] = 0;
+			data[i] = 0;
+		}
+	}
+
+	delete[] dir;
+}
+
+// -----------------------------------CANNY-SUBSECTION-----------------------------------
+
+unsigned char* Channel::directions(){
+	dimension = 3;
+	offset = 1;
+	weight = 1;
+
+	int filterX[9] = {
+		-1, 0, 1,
+		-2, 0, 2,
+		-1, 0, 1
+	};
+	int filterY[9] = {
+		-1,-2,-1,
+		 0, 0, 0,
+		 1, 2, 1
+	};
+
+	int *v[2];
+	delete[] filter;
+
+	filter = filterX;
+	v[0] = returnFiltered();
+
+	filter = filterY;
+	v[1] = returnFiltered();
+
+	int *result = new int[width * height];
+	for(int i = 0; i < height; ++i){
+		for(int j = 0; j < width; ++j){
+			result[i*width + j] = atan2(v[1][i*width + j], v[0][i*width + j]) * (180/PI);
+		}
+	}
+
+	unsigned char *output = degree2direction(result);
+
+	filter = nullptr; // para não apontar para o lixo de filterY
+	delete[] result;
+	delete[] v[0];
+	delete[] v[1];
+	return output;
+}
+
+unsigned char* Channel::degree2direction(int *input){
+	float aux;
+	unsigned char *output = new unsigned char[width * height];
+	for(int i = 0; i < width*height; i++){
+		aux = input[i] + 180;
+		aux /= 22.5;
+		if(aux < 1 || (aux >= 7 && aux < 9) || aux >= 15){
+			output[i] = HORIZONTAL;
+		}
+		else if((aux >= 1 && aux < 3) || (aux >= 9  && aux < 11)){
+			output[i] = DIAG_DOWN;
+		}
+		else if((aux >= 3 && aux < 5) || (aux >= 11 && aux < 13)){
+			output[i] = VERTICAL;
+		}
+		else if((aux >= 5 && aux < 7) || (aux >= 13 && aux < 15)){
+			output[i] = DIAG_UP;
+		}
+		else{
+			std::cout << aux << std::endl;
+		}
+	}
+	return output;
+}
+
+bool Channel::isLocalMax(int index, unsigned char ori, int maxDist){
+	int neighbor = index;
+
+	switch(ori){
+	case HORIZONTAL:
+		for(int i = 0; i < maxDist; i++){
+			--neighbor;
+			if(neighbor < 0) break;
+			if(data[index] <= data[neighbor]){
+				return false;
+			}
+		}
+
+		neighbor = index;
+
+		for(int i = 0; i < maxDist; i++){
+			++neighbor;
+			if(neighbor >= width * height) break;
+			if(data[index] <= data[neighbor]){
+				return false;
+			}
+		}
+		break;
+
+	case DIAG_UP:
+		for(int i = 0; i < maxDist; i++){
+			neighbor -= width;
+			++neighbor;
+			if(neighbor < 0) break;
+			if(data[index] <= data[neighbor]){
+				return false;
+			}
+		}
+		
+		neighbor = index;
+
+		for(int i = 0; i < maxDist; i++){
+			neighbor += width;
+			--neighbor;
+			if(neighbor >= width * height) break;
+			if(data[index] <= data[neighbor]){
+				return false;
+			}
+		}
+		break;
+
+	case VERTICAL:
+		for(int i = 0; i < maxDist; i++){
+			neighbor -= width;
+			if(neighbor < 0) break;
+			if(data[index] <= data[neighbor]){
+				return false;
+			}
+		}
+		
+		neighbor = index;
+
+		for(int i = 0; i < maxDist; i++){
+			neighbor += width;
+			if(neighbor >= width * height) break;
+			if(data[index] <= data[neighbor]){
+				return false;
+			}
+		}
+		break;
+		
+	case DIAG_DOWN:
+		for(int i = 0; i < maxDist; i++){
+			neighbor -= width;
+			--neighbor;
+			if(neighbor < 0) break;
+			if(data[index] <= data[neighbor]){
+				return false;
+			}
+		}
+		
+		neighbor = index;
+
+		for(int i = 0; i < maxDist; i++){
+			neighbor += width;
+			++neighbor;
+			if(neighbor >= width * height) break;
+			if(data[index] <= data[neighbor]){
+				return false;
+			}
+		}
+		break;
+	}
+
+	return true;
+}
+
 // -----------------------------------OTHERS-----------------------------------
 
-unsigned char* Channel::expandedCopy(){ 
+unsigned char* Channel::expandedCopy(){
+	return expandedCopy(data);
+}
+
+unsigned char* Channel::expandedCopy(unsigned char *in){
 	// retorna um vetor com a imagem original mais as linhas de fora replicadas
 	// é feito com base no filtro carregado no momento pois cada tamanho de filtro
 	// demanda 'offset' linhas em cada direção
@@ -720,31 +929,31 @@ unsigned char* Channel::expandedCopy(){
 	for(i = offset; i < height + offset; ++i){
 		for(j = offset; j < width + offset; ++j)
 		{
-			expCopy[i*truewidth + j] = data[(i - offset)*width + (j - offset)];
+			expCopy[i*truewidth + j] = in[(i - offset)*width + (j - offset)];
 		}
 	}
 
 	for(i = 0; i < offset; ++i){					// primeiras linhas
 		for(j = offset; j < truewidth - offset; ++j){
-			expCopy[i*truewidth + j] = data[j - offset];
+			expCopy[i*truewidth + j] = in[j - offset];
 		}
 	}
 
 	for(i = height + offset; i < trueheight; ++i){	// últimas linhas
 		for(j = offset; j < truewidth - offset; ++j){
-			expCopy[i*truewidth + j] = data[(height - 1)*width + (j - offset)];
+			expCopy[i*truewidth + j] = in[(height - 1)*width + (j - offset)];
 		}
 	}
 
 	for(i = offset; i < height + offset; ++i){		// primeiras colunas
 		for(j = 0; j < offset; ++j){
-			expCopy[i*truewidth + j] = data[(i - offset)*width];
+			expCopy[i*truewidth + j] = in[(i - offset)*width];
 		}
 	}
 
 	for(i = offset; i < height + offset; ++i){		// últimas colunas
 		for(j = width + offset; j < truewidth; ++j){
-			expCopy[i*truewidth + j] = data[(i - offset)*width + (width - 1)];
+			expCopy[i*truewidth + j] = in[(i - offset)*width + (width - 1)];
 		}
 	}
 	
@@ -755,7 +964,7 @@ unsigned char* Channel::expandedCopy(){
 					expCopy[
 						(((i*(height + offset)) + k)*truewidth) +
 						  (j*(width + offset) + l)] = 
-					data[0 + ((i*(height - 1))*width) + (j*(width - 1))];
+					in[0 + ((i*(height - 1))*width) + (j*(width - 1))];
 				}
 			}
 		}
@@ -768,14 +977,14 @@ unsigned char* Channel::to255(int *in){
 	int min = 99999;
 	int max = -min;
 	for(int index = 0; index < width * height; ++index){
-		if(in[index] > max) max = in[index]; 
+		if(in[index] > max) max = in[index];
         if(in[index] < min) min = in[index]; 
 	}
 
 	//std::cout << "max e min: " << max << " " << min << std::endl;
 	unsigned char *out = new unsigned char[width * height];
 	for(int index = 0; index < width * height; ++index){
-		out[index] = (unsigned char) ((in[index] - min / (float)(max - min)) * 255);
+		out[index] = (unsigned char) ((((float)in[index] - min) / (float)(max - min)) * 255);
 	}
 
 	return out;
